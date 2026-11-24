@@ -1,0 +1,77 @@
+name: build-linux-lowend
+
+on:
+  push:
+    branches: [ lowend ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # O alvo roda Debian 13 (glibc 2.41) e o PPSSPP atual exige SDL3, que nao
+    # existe no Debian 12. debian:13 = mesma base do alvo.
+    container: debian:13
+
+    steps:
+      - name: Dependencias
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build pkg-config ccache git ca-certificates nasm \
+            libsdl3-dev libsdl3-ttf-dev \
+            libcurl4-openssl-dev \
+            libgl1-mesa-dev libglu1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev \
+            libfreetype-dev libfontconfig1-dev libharfbuzz-dev \
+            libpng-dev zlib1g-dev libzip-dev \
+            libudev-dev libx11-dev libxext-dev
+
+      - uses: actions/checkout@v4
+        with:
+          # glslang, SPIRV-Cross, zstd, rcheevos, libchdr, rapidjson...
+          # sem isso o build morre na primeira dependencia ausente.
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: /root/.ccache
+          key: ccache-${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ github.ref }}-
+            ccache-
+
+      - name: Configurar
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DUNITTEST=OFF \
+            -DHEADLESS=OFF \
+            -DATLAS_TOOL=OFF \
+            -DLIBRETRO=OFF \
+            -DUSE_DISCORD=OFF \
+            -DUSE_MINIUPNPC=OFF \
+            -DUSE_FFMPEG=ON \
+            -DUSE_CCACHE=ON \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_C_FLAGS_RELEASE="-O3 -DNDEBUG -pipe -march=sandybridge -mtune=sandybridge" \
+            -DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG -pipe -march=sandybridge -mtune=sandybridge"
+
+      - name: Compilar
+        run: cmake --build build -j"$(nproc)"
+
+      - name: Empacotar
+        run: |
+          set -e
+          mkdir -p dist
+          cp build/PPSSPPSDL dist/
+          cp -r build/assets dist/ 2>/dev/null || cp -r assets dist/ 2>/dev/null || true
+          tar czf "ppsspp-lowend-${{ github.run_number }}.tar.gz" -C dist .
+          ls -lh *.tar.gz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ppsspp-lowend
+          path: ppsspp-lowend-*.tar.gz
+          retention-days: 30
