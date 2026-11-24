@@ -17,7 +17,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
-            build-essential cmake ninja-build pkg-config ccache git ca-certificates nasm \
+            build-essential cmake ninja-build pkg-config ccache git ca-certificates \
             libsdl3-dev libsdl3-ttf-dev \
             libcurl4-openssl-dev \
             libgl1-mesa-dev libglu1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev \
