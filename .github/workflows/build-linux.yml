@@ -60,8 +60,8 @@ jobs:
             -DUSE_CCACHE=ON \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_C_FLAGS_RELEASE="-O3 -DNDEBUG -pipe -march=sandybridge -mtune=sandybridge" \
-            -DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG -pipe -march=sandybridge -mtune=sandybridge"
+            -DCMAKE_C_FLAGS_RELEASE="-O3 -DNDEBUG -pipe -march=sandybridge -mtune=sandybridge -mno-avx -mno-aes" \
+            -DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG -pipe -march=sandybridge -mtune=sandybridge -mno-avx -mno-aes"
 
       - name: Compilar
         run: cmake --build build -j"$(nproc)"
