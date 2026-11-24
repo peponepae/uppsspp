@@ -32,6 +32,11 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - name: Corrigir posse do repositorio
+        # actions/checkout entrega o workspace com UID diferente do git do
+        # container. Sem isso, git describe falha e git-version.cmake quebra.
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Cache ccache
         uses: actions/cache@v4
         with:
